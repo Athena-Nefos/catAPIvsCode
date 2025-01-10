@@ -1,7 +1,6 @@
 import * as Carousel from "./Carousel.js";
-//you have axios, you don't need to import it
-console.log(axios)
 
+document.addEventListener("DOMContentLoaded", () => {
 // The breed selection input element.
 const breedSelect = document.getElementById("breedSelect");
 // The information section div element.
@@ -25,28 +24,33 @@ const API_KEY = "live_tgMdBLqk8JCbiD7gIdmAaje5TyKTpwn1UZt8rMCgMcdmbMTbAQ4JPxVg61
 
 async function initialLoad() {
   try {
-    const res = await fetch('https://api.thecatapi.com/v1/breeds');
-    const data = await res.json();
-console.log(data);
-    //Create option tags
-    
+    // Fetch the list of cat breeds from the API
+    /*const response = await fetch("https://api.thecatapi.com/v1/breeds", {
+      headers: { "x-api-key": API_KEY },
+    });
 
-      for (const breed of data) {
-        const option = document.createElement('option');
-        option.setAttribute("value", breed);
-        option.textContent = breed.name;
-        breedSelect.append(option);
-      }
-    
-  } catch (err) {
-    console.log(err);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    } 
+
+    const breeds = await response.json(); */
+    const breeds = await axios.get("https://api.thecatapi.com/v1/breeds");
+
+    // Populate the breed dropdown with fetched breeds
+    breeds.data.forEach((breed) => {
+      const option = document.createElement("option");
+      option.value = breed.id; // Use breed ID for future API calls
+      option.textContent = breed.name; // Display breed name
+      breedSelect.appendChild(option);
+    });
+
+    console.log("Breeds loaded successfully!");
+  } catch (error) {
+    console.error("Error fetching breeds:", error);
   }
 }
-initialLoad();
 
 
-//At this point , you need to create your own git hub link 
-// got to folder you cloned today, and clone your repo again and give it the name below , git clone (repo url) or just commet out the fetch() line 
 /**
  * 2. Create an event handler for breedSelect that does the following:
  * - Retrieve information on the selected breed from the cat API using fetch().
@@ -62,6 +66,70 @@ initialLoad();
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
 
+async function loadBreedImages(breedId) {
+  try {
+    // Clear the carousel and info section before loading new content
+    Carousel.clear();
+    infoDump.innerHTML = "";
+
+    // Fetch breed images and details
+    const response = await fetch(
+      `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`,
+      {
+        headers: { "x-api-key": API_KEY },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const images = await response.json();
+
+    // Loop through each image object and create carousel items
+    images.forEach((image) => {
+      const carouselItem = Carousel.createCarouselItem(
+        image.url,       // Image source URL
+        image.breeds[0]?.name || "Cat Image", // Image alt text (fallback to "Cat Image")
+        image.id         // Image ID for the favorite functionality
+      );
+      Carousel.appendCarousel(carouselItem);
+    });
+
+    //initialize BS carousel fro left to right controls
+    Carousel.start();
+    // Fetch breed information for the info section
+    const breedInfo = images[0]?.breeds[0]; // Use the first image's breed information
+    if (breedInfo) {
+      const breedInfoHTML = `
+        <h2>${breedInfo.name}</h2>
+        <p>${breedInfo.description}</p>
+        <p><strong>Temperament:</strong> ${breedInfo.temperament}</p>
+        <p><strong>Origin:</strong> ${breedInfo.origin}</p>
+        <p><strong>Life Span:</strong> ${breedInfo.life_span} years</p>
+      `;
+      infoDump.innerHTML = breedInfoHTML;
+    } else {
+      infoDump.innerHTML = "<p>No breed information available.</p>";
+    }
+
+    console.log(`Loaded images and info for breed ID: ${breedId}`);
+  } catch (error) {
+    console.error("Error loading breed images:", error);
+    infoDump.innerHTML = "<p>Failed to load breed information. Please try again later.</p>";
+  }
+}
+
+// Event listener for breed selection
+breedSelect.addEventListener("change", (event) => {
+  const selectedBreedId = event.target.value;
+  if (selectedBreedId) {
+    loadBreedImages(selectedBreedId);
+  }
+});
+// Call initialLoad to populate the breed dropdown on page load
+initialLoad();
+});
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
  */
