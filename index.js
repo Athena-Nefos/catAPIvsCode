@@ -13,6 +13,38 @@ const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 // Step 0: Store your API key here for reference and easy access.
 const API_KEY = "live_tgMdBLqk8JCbiD7gIdmAaje5TyKTpwn1UZt8rMCgMcdmbMTbAQ4JPxVg61nllP26";
 
+axios.interceptors.request.use(request => {
+
+  //reset the progress bar to 0% when a new request is made
+  progressBar.style.width = "0%";
+  //set the cursor to "progress to indicate the request is in progress"
+  document.body.style.cursor = "progress";
+  request.metadata = request.metadata || {};
+  request.metadata.startTime = new Date().getTime();
+  console.log("requestSend");
+  return request;
+  });
+  axios.interceptors.response.use(
+  (response) => {
+      response.config.metadata.endTime = new Date().getTime();
+      response.config.metadata.durationInMS = response.config.metadata.endTime - response.config.metadata.startTime;
+      console.log(`Request took ${response.config.metadata.durationInMS} milliseconds.`)
+
+      //Reset the cursor style when the request finishes
+      document.body.style.cursor = "default";
+      return response;
+  },
+  (error) => {
+      error.config.metadata.endTime = new Date().getTime();
+      error.config.metadata.durationInMS = error.config.metadata.endTime - error.config.metadata.startTime;
+      console.log(`Request took ${error.config.metadata.durationInMS} milliseconds.`)
+
+      //Reset the cursor style when the request finishes with an error
+      document.body.style.cursor = "default";
+      throw error;
+
+  });
+
 /**
  * 1. Create an async function "initialLoad" that does the following:
  * - Retrieve a list of breeds from the cat API using fetch().
@@ -73,7 +105,7 @@ async function loadBreedImages(breedId) {
     infoDump.innerHTML = "";
 
     // Fetch breed images and details
-    const response = await fetch(
+    /* const response = await fetch(
       `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`,
       {
         headers: { "x-api-key": API_KEY },
@@ -84,17 +116,35 @@ async function loadBreedImages(breedId) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const images = await response.json();
+    const images = await response.json(); */
 
+    const response = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`, 
+      {headers: {"x-api-key": API_KEY},
+      onDownloadProgress: (processEvent) => {updateProgress(processEvent)} } //add onDownloadProgress here to update the progress bar
+      
+    );
+
+    const images = response.data;
+    if (images.length === 0) {
+      throw new error("No images found for this breed.");
+    }
+
+
+    console.log(images);
+
+   // if (Array.isArray(images.data)) {
     // Loop through each image object and create carousel items
     images.forEach((image) => {
       const carouselItem = Carousel.createCarouselItem(
         image.url,       // Image source URL
-        image.breeds[0]?.name || "Cat Image", // Image alt text (fallback to "Cat Image")
+        image.breeds[0]?.name || "Cat image", // Image alt text (fallback to "Cat Image")
         image.id         // Image ID for the favorite functionality
       );
       Carousel.appendCarousel(carouselItem);
     });
+  //} else {
+  //  console.error("Expected an array but received:", images.data);
+  //}
 
     //initialize BS carousel fro left to right controls
     Carousel.start();
@@ -164,6 +214,14 @@ initialLoad();
  *   once or twice per request to this API. This is still a concept worth familiarizing yourself
  *   with for future projects.
  */
+
+function updateProgress(event) {
+  //if (event.total) {
+    const progressPercentage = Math.round((event.loaded / event.total) * 100);
+    progressBar.style.width = `${progressPercentage}%`; //update progress bar width
+    console.log(`Download Progress: ${progressPercentage}%`);
+ //}
+}
 
 /**
  * 7. As a final element of progress indication, add the following to your axios interceptors:
