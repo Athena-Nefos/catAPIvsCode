@@ -295,12 +295,17 @@ export async function favourite(imgId) {
  *    repeat yourself in this section.
  */
 
+getFavouritesBtn.addEventListener("click", getFavourites);
+
 async function getFavourites() {
+
+  console.log("get favourites")
   try {
 
     //clear the carousel before loading favourites
     Carousel.clear();
-
+    infoDump.innerHTML = "Favourited Images";
+    infoDump.style.fontSize = "30px";
     //fetch the list of favourites
     const favouritesResponse = await axios.get("https://api.thecatapi.com/v1/favourites", {
       headers: {"x-api-key": API_KEY },
