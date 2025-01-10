@@ -1,6 +1,6 @@
 import * as Carousel from "./Carousel.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+
 // The breed selection input element.
 const breedSelect = document.getElementById("breedSelect");
 // The information section div element.
@@ -13,37 +13,7 @@ const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 // Step 0: Store your API key here for reference and easy access.
 const API_KEY = "live_tgMdBLqk8JCbiD7gIdmAaje5TyKTpwn1UZt8rMCgMcdmbMTbAQ4JPxVg61nllP26";
 
-axios.interceptors.request.use(request => {
 
-  //reset the progress bar to 0% when a new request is made
-  progressBar.style.width = "0%";
-  //set the cursor to "progress to indicate the request is in progress"
-  document.body.style.cursor = "progress";
-  request.metadata = request.metadata || {};
-  request.metadata.startTime = new Date().getTime();
-  console.log("requestSend");
-  return request;
-  });
-  axios.interceptors.response.use(
-  (response) => {
-      response.config.metadata.endTime = new Date().getTime();
-      response.config.metadata.durationInMS = response.config.metadata.endTime - response.config.metadata.startTime;
-      console.log(`Request took ${response.config.metadata.durationInMS} milliseconds.`)
-
-      //Reset the cursor style when the request finishes
-      document.body.style.cursor = "default";
-      return response;
-  },
-  (error) => {
-      error.config.metadata.endTime = new Date().getTime();
-      error.config.metadata.durationInMS = error.config.metadata.endTime - error.config.metadata.startTime;
-      console.log(`Request took ${error.config.metadata.durationInMS} milliseconds.`)
-
-      //Reset the cursor style when the request finishes with an error
-      document.body.style.cursor = "default";
-      throw error;
-
-  });
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -179,7 +149,7 @@ breedSelect.addEventListener("change", (event) => {
 });
 // Call initialLoad to populate the breed dropdown on page load
 initialLoad();
-});
+
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
  */
@@ -198,6 +168,38 @@ initialLoad();
  * - Add a console.log statement to indicate when requests begin.
  * - As an added challenge, try to do this on your own without referencing the lesson material.
  */
+
+axios.interceptors.request.use(request => {
+
+  //reset the progress bar to 0% when a new request is made
+  progressBar.style.width = "0%";
+  //set the cursor to "progress to indicate the request is in progress"
+  document.body.style.cursor = "progress";
+  request.metadata = request.metadata || {};
+  request.metadata.startTime = new Date().getTime();
+  console.log("requestSend");
+  return request;
+  });
+  axios.interceptors.response.use(
+  (response) => {
+      response.config.metadata.endTime = new Date().getTime();
+      response.config.metadata.durationInMS = response.config.metadata.endTime - response.config.metadata.startTime;
+      console.log(`Request took ${response.config.metadata.durationInMS} milliseconds.`)
+
+      //Reset the cursor style when the request finishes
+      document.body.style.cursor = "default";
+      return response;
+  },
+  (error) => {
+      error.config.metadata.endTime = new Date().getTime();
+      error.config.metadata.durationInMS = error.config.metadata.endTime - error.config.metadata.startTime;
+      console.log(`Request took ${error.config.metadata.durationInMS} milliseconds.`)
+
+      //Reset the cursor style when the request finishes with an error
+      document.body.style.cursor = "default";
+      throw error;
+
+  });
 
 /**
  * 6. Next, we'll create a progress bar to indicate the request is in progress.
@@ -241,6 +243,46 @@ function updateProgress(event) {
  */
 export async function favourite(imgId) {
   // your code here
+  try {
+    console.log(`Toggling favourite for image ID: ${imgId}`);
+    //logic for toggling favourite will go here
+    //check if the image is already favourited 
+    //fetch the list of favourites
+
+    const favouritesResponse = await axios.get("https://api.thecatapi.com/v1/favourites", {
+      headers: {"x-api-key": API_KEY },
+    });
+
+    console.log("Favourites fetched", favouritesResponse.data);
+
+    //check if the image is already favourited
+    const existingFavourite = favouritesResponse.data.find(fav => fav.image_id === imgId);
+
+    if (existingFavourite) {
+      console.log(`Image ID: ${imgId} is already favourited. ID: ${existingFavourite}`);
+
+      //logic to remove the favourite will go here
+      const deleteResponse = await axios.delete(`https://api.thecatapi.com/v1/favourites/${existingFavourite.id}`, {
+        headers: {"x-api-key": API_KEY },
+      });
+
+      console.log(`Favourite removed for image ID: ${imgId}`, deleteResponse.data);
+
+    } else {
+      console.log(`Image ID: ${imgId} is not favourited. Adding it now.`);
+
+      //logic to add the favourite will go here
+      const postResponse = await axios.post("https://api.thecatapi.com/v1/favourites",
+        { image_id: imgId },
+        { headers: {"x-api-key": API_KEY} }
+      );
+
+      console.log(`Favourite added for image ID: ${imgId}`, postResponse.data);
+    }
+
+  }catch (error) {
+    console.log("Error in favourite function", error);
+  }
 }
 
 /**
