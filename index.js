@@ -1,5 +1,6 @@
 import * as Carousel from "./Carousel.js";
-import axios from "axios";
+//you have axios, you don't need to import it
+console.log(axios)
 
 // The breed selection input element.
 const breedSelect = document.getElementById("breedSelect");
@@ -11,7 +12,7 @@ const progressBar = document.getElementById("progressBar");
 const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY = "";
+const API_KEY = "live_tgMdBLqk8JCbiD7gIdmAaje5TyKTpwn1UZt8rMCgMcdmbMTbAQ4JPxVg61nllP26";
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -22,6 +23,30 @@ const API_KEY = "";
  * This function should execute immediately.
  */
 
+async function initialLoad() {
+  try {
+    const res = await fetch('https://api.thecatapi.com/v1/breeds');
+    const data = await res.json();
+console.log(data);
+    //Create option tags
+    
+
+      for (const breed of data) {
+        const option = document.createElement('option');
+        option.setAttribute("value", breed);
+        option.textContent = breed.name;
+        breedSelect.append(option);
+      }
+    
+  } catch (err) {
+    console.log(err);
+  }
+}
+initialLoad();
+
+
+//At this point , you need to create your own git hub link 
+// got to folder you cloned today, and clone your repo again and give it the name below , git clone (repo url) or just commet out the fetch() line 
 /**
  * 2. Create an event handler for breedSelect that does the following:
  * - Retrieve information on the selected breed from the cat API using fetch().
