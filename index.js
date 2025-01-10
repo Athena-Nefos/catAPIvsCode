@@ -96,7 +96,7 @@ async function loadBreedImages(breedId) {
 
     const images = response.data;
     if (images.length === 0) {
-      throw new error("No images found for this breed.");
+      throw new Error("No images found for this breed.");
     }
 
 
@@ -294,6 +294,47 @@ export async function favourite(imgId) {
  *    If that isn't in its own function, maybe it should be so you don't have to
  *    repeat yourself in this section.
  */
+
+async function getFavourites() {
+  try {
+
+    //clear the carousel before loading favourites
+    Carousel.clear();
+
+    //fetch the list of favourites
+    const favouritesResponse = await axios.get("https://api.thecatapi.com/v1/favourites", {
+      headers: {"x-api-key": API_KEY },
+    });
+
+    const favourites = favouritesResponse.data;
+
+    //check if there are favourites
+    if (favourites.length === 0) {
+      infoDump.innerHTML = "<p>No favourites yet! Start adding some by clicking on the heart icon.</p>";
+      return;
+    }
+
+    //populate the carousel with favourite images
+    favourites.forEach((fav) => {
+      const carouselItem = Carousel.createCarouselItem(
+        fav.image.url, //image source URL
+        "Favourited Image", //alt text
+        fav.image_id //Image ID for the favourite functionality
+      );
+      Carousel.appendCarousel(carouselItem);
+    });
+
+    //start the carousel
+    Carousel.start();
+    console.log("Favourites successfully loaded!");
+  } catch (error) {
+    console.error("Error fetching favourites:", error);
+    infoDump.innerHTML = "<p>Failed to load favourites. Please try again later.</p>";
+  }
+}
+
+//bind the event listener to the "Get Favourites" button
+getFavouritesBtn.addEventListener("click", getFavourites);
 
 /**
  * 10. Test your site, thoroughly!
